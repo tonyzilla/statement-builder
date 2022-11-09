@@ -7,6 +7,12 @@
       "target": "es5",
       "jsx": "react",
       "allowJs": true,
-      "moduleResolution": "node"
+      "moduleResolution": "node",
+      "baseUrl": ".",
+      "paths": {
+        "Components/*": ["src/components/*"],
+        "Hooks/*": ["src/hooks/*"],
+        "Store/*": ["src/store/*"]
+      }
     }
   }
