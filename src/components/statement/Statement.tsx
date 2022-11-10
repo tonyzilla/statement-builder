@@ -1,74 +1,72 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import { useAppSelector, useAppDispatch } from 'Hooks/redux.hooks';
-
-import { getId } from 'Store/statement/statement.slice';
 // Import React dependencies.
 
-import { createEditor } from 'slate';
+import { createEditor, Descendant } from 'slate';
 
 // Import the Slate components and React plugin.
 import { Slate, Editable, withReact, RenderElementProps } from 'slate-react';
+import DefaultElement from './DefaultElement';
+import TableElement from './TableElement';
+import { useAppDispatch } from 'Hooks/redux.hooks';
+import { save } from 'Store/statement/statement.slice';
+import LeafElement from './LeafElement';
+import TableCellElement from './TableCellElement';
+import TableRowElement from './TableRowElement';
 
 
-// TypeScript users only add this code TODO should be in it's own module or d.ts file
-import { BaseEditor, Descendant } from 'slate';
-import { ReactEditor } from 'slate-react';
-
-type CustomElement = { type: 'paragraph'; children: CustomText[] }
-type CustomText = { text: string }
-
-declare module 'slate' {
-  interface CustomTypes {
-    Editor: BaseEditor & ReactEditor
-    Element: CustomElement
-    Text: CustomText
-  }
+interface IStatementProps {
+    statement: Descendant[];
 }
 
-// Add the initial value.
-const initialValue = [
-    {
-      type: 'paragraph',
-      children: [{ text: 'A line of text in a paragraph.' }],
-    },
-  ] as Descendant[];
-  
+export default (props: IStatementProps)=> {
+    const [ editor ] = useState(() => withReact(createEditor()));
+    const { statement } = props;
+    const dispatch = useAppDispatch();
+  console.log('statement render', props);
 
-  // Define a React component renderer for our code blocks.
-const CodeElement = (props: RenderElementProps) => {
-    return (
-      <pre {...props.attributes}>
-        <code>{props.children}</code>
-      </pre>
-    )
-  };
-
-  const DefaultElement = (props: RenderElementProps) => {
-    return <p {...props.attributes}>{props.children}</p>
-  }
-
-export default ()=>{
-    const id = useAppSelector(getId)
-    const [editor] = useState(() => withReact(createEditor()));
-
-      // Define a rendering function based on the element passed to `props`. We use
-  // `useCallback` here to memoize the function for subsequent renders.
   const renderElement = useCallback((props: any) => {
     switch (props.element.type) {
-      case 'code':
-        return <CodeElement {...props} />
+      case 'table':
+        return <TableElement {...props} />
+        case 'table-row':
+          return <TableRowElement {...props} />
+        case 'table-cell':
+          return <TableCellElement {...props} />
       default:
         return <DefaultElement {...props} />
     }
-  }, [])
+  }, []);
 
+  const renderLeaf = useCallback((props: any) => {
+    return <LeafElement {...props} />
+  }, []);
+
+    // workaround to make slate a controlled component
+    // due to https://github.com/ianstormtaylor/slate/issues/4612 
+    // this is bad
+    editor.children = statement;
+    
 
     return (
-    <Slate editor={editor} value={initialValue} > 
+    <Slate
+      editor={editor} 
+      value={statement}
+      onChange={(value)=> {
+        const isAstChange = editor.operations.some(
+            op => 'set_selection' !== op.type
+          )
+          if (isAstChange) {
+            // Save the value to Local Storage.
+            dispatch(save(value));
+            
+          }
+        }}> 
         <Editable
-         renderElement={renderElement}
-         onKeyDown={event => {
+          renderElement={renderElement}
+          renderLeaf={renderLeaf}
+          onKeyDown={event => {
+            console.log(event);
             if (event.key === '&') {
               // Prevent the ampersand character from being inserted.
               event.preventDefault()

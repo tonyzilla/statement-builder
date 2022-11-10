@@ -7,6 +7,10 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
+      },
+      {
         test: /\.(js|jsx|ts|tsx)$/,
         exclude: /node_modules/,
         use: {
@@ -24,8 +28,7 @@ module.exports = {
       Components: path.resolve(__dirname, 'src/components') ,
       Store: path.resolve(__dirname, 'src/store') ,
       Hooks: path.resolve(__dirname, 'src/hooks') ,
-    },
-    fallback: { 'util': require.resolve('util/') }
+    }
   },
   plugins: [
     new HtmlWebPackPlugin({
