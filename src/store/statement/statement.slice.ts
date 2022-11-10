@@ -1,103 +1,96 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from 'Store/store';
 import { BaseElement, Descendant } from 'slate';
+import { buildCell, buildRow, getNodeForPath, getNodesForPath, loadStatement, saveStatement } from './statement.utils';
+import { ITableCellNode, ITableTextNode, TTableCellJustify } from 'Types/statement.types';
 
-interface StatementState {
+
+interface IStatementState {
   statement:  Descendant[];
-  statementRows: number;
-  statementCols: number;
+  // NOTE for ease of this POC, selection will be stored as an array of numbers (positional index through the component tree)
+  // this is how slate represents it, but isn't necessarily the most human readable / debugable. 
+  selection: number[];
 }
 
-const DEFAULT_ROWS = 2;
-const DEFAULT_COLS = 6;
-
-
-const buildCell= () => ({
-  type: 'table-cell',
-  children: [{ text: '' }],
-});
-
-const buildRow = () =>  {
-  const row =  {
-  type: 'table-row',
-  children: []
-  };
-
-  for (let j = 0; j < DEFAULT_COLS; j++){
-    const newChild = buildCell();
-    row.children.push(newChild);
-  }
-
-  return row;
-};
-
-// TODO this would normally go in a helper
-const buildInitalStatement = ()=> {
-  let root =     {
-    type: 'table',
-    children: []
-  }
-
-  for (let i =0; i < DEFAULT_ROWS; i++ ){
-    const newRow = buildRow();
-      root.children.push(newRow);
-  
-  }
-  return root;
-
+const initialState: IStatementState = {
+  statement: [],
+  selection: null
 }
 
-// Define the initial state using that type
-const initialState: StatementState = {
-  statement: [
-    buildInitalStatement()
-  ],
-  statementCols: DEFAULT_COLS,
-  statementRows: DEFAULT_ROWS
-}
-
+/**
+ * The main statement slice. 
+ * 
+ * Note If this was beyond just a POC, we'd likely want to 
+ * split some of these actions out (like selection for example)
+ */
 export const statementSlice = createSlice({
   name: 'counter',
-  // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
     load: (state) => {
-      // TODO local storage bits should be in middlewear
-      const loadedStatement = JSON.parse(localStorage.getItem('statement'));
-      if(loadedStatement){
-        state.statement = loadedStatement;
-      }
+      // NOTE saving / loading bits should be in middlewear (sagas, thunks, etc)
+      const loadedStatement = loadStatement();
+      state.statement = loadedStatement;
       
     },
     save: (state, action: PayloadAction<Descendant[]>) => {
-      console.log(action.payload);
       const {payload} = action;
-      const content = JSON.stringify(action.payload);
-      
-
-
-      // localStorage.setItem('statement', content);
-      //createSlice / createReducer should handle doing this immutably
+      saveStatement(payload);
       state.statement = payload;
+
     },
     addRow: (state) => {
       const  { statement } = state;
-      // yes this is hack to not have to track the current table.
-      (statement[0] as BaseElement)?.children?.push(buildRow());
+      const root = statement[0] as BaseElement;
+      const firstRow = root?.children[0] as BaseElement;
+      const numCols = firstRow.children.length;
+      (statement[0] as BaseElement)?.children?.push(buildRow(numCols));
+      
+      saveStatement(statement);
     },
     addCol: (state) => {
       const  { statement } = state;
-      // yes this is hack to not have to track the current table.
       (statement[0] as BaseElement)?.children?.forEach((child)=> {
         (child as BaseElement).children.push(buildCell());
       });
+      saveStatement(statement);
+    },
+    // selection is read only at this point
+    setSelection: (state, action: PayloadAction<number[]>)=> {
+      const { payload } = action;
+      state.selection = payload;
+    },
+    addBold: (state)=> {
+      const { selection, statement } = state;
+      const node = getNodeForPath(statement, selection) as ITableTextNode;
+      node.bold = !node.bold;
+
+      saveStatement(statement);
+      
+    },
+    addItalics: (state) => {
+      const { selection, statement } = state;
+      const node = getNodeForPath(statement, selection) as ITableTextNode;
+      node.italic = !node.italic;
+
+      saveStatement(statement);
+    },
+    justifyCell: (state, action: PayloadAction<TTableCellJustify>) => {
+      const { selection, statement } = state;
+      const { payload } = action;
+      
+      // get the parent of the text node as that's where the justifying happens
+      const nodes = getNodesForPath(statement, selection);
+      const parent = nodes[selection.length - 2] as ITableCellNode;
+      
+      parent.justify = payload;
+      saveStatement(statement);
     }
+
   },
 });
 
-export const { load, save, addRow, addCol } = statementSlice.actions;
-
-// Other code such as selectors can use the imported `RootState` type
+export const { load, save, addRow, addCol, setSelection, addBold, addItalics, justifyCell } = statementSlice.actions;
 export const getStatement = (state: RootState) => state.statement.statement;
 
 export default statementSlice.reducer;

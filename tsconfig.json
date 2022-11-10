@@ -12,7 +12,9 @@
       "paths": {
         "Components/*": ["src/components/*"],
         "Hooks/*": ["src/hooks/*"],
-        "Store/*": ["src/store/*"]
+        "Store/*": ["src/store/*"],
+        "Types/*": ["src/types/*"]
+
       }
     }
   }

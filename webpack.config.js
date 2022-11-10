@@ -28,6 +28,7 @@ module.exports = {
       Components: path.resolve(__dirname, 'src/components') ,
       Store: path.resolve(__dirname, 'src/store') ,
       Hooks: path.resolve(__dirname, 'src/hooks') ,
+      Types: path.resolve(__dirname, 'src/types') ,
     }
   },
   plugins: [
