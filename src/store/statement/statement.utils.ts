@@ -1,7 +1,7 @@
 import { BaseElement, Descendant } from "slate";
 
-const DEFAULT_ROWS = 2;
-const DEFAULT_COLS = 6;
+export const DEFAULT_ROWS = 2;
+export const DEFAULT_COLS = 6;
 
 /**
  * Builds a new default table cell. 

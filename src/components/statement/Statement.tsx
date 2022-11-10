@@ -63,8 +63,10 @@ export default (props: IStatementProps)=> {
           )
           if (selectionChange) {           
             // Note to elevate the selection we have to drill even further into slate internal objects, which isn't ideal
-            const { newProperties: {anchor: { path }}}  = selectionChange as SelectionOperation;
-            dispatch(setSelection(path));
+            const path = (selectionChange as SelectionOperation)?.newProperties?.focus?.path;
+            if (path){
+              dispatch(setSelection(path));
+            }
             
           } else {
             // save the actual changes

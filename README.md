@@ -25,3 +25,4 @@ This project was done with limited time and as a POC. As such the following thin
 ## Known Issues
 - there appears to be a bunch of default logic associated with elements in slate. So selecting elemnts and hitting the delete key will naturally delete their element in the tree. This probably isn't what you want for a statement creation tool as you'd probably like a rigid width / height. I'm not going to bother overriding it for now.
 - No keyboard shortcuts are implemented 
+- selection is limited to a single cell

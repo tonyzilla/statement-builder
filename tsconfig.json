@@ -9,6 +9,7 @@
       "allowJs": true,
       "moduleResolution": "node",
       "baseUrl": ".",
+      "esModuleInterop": true,
       "paths": {
         "Components/*": ["src/components/*"],
         "Hooks/*": ["src/hooks/*"],
